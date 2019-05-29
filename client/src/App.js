@@ -5,8 +5,11 @@ import getWeb3 from "./utils/getWeb3";
 import "./App.css";
 
 class App extends Component {
-  state = { storageValue: 0, web3: null, accounts: null, contract: null };
-
+  constructor(props) {
+    super(props);
+    this.state = { storageValue: 0, web3: null, accounts: null, contract: null };
+  }
+  
   componentDidMount = async () => {
     try {
       // Get network provider and web3 instance.
@@ -26,6 +29,9 @@ class App extends Component {
       // Set web3, accounts, and contract to the state, and then proceed with an
       // example of interacting with the contract's methods.
       this.setState({ web3, accounts, contract: instance }, this.runExample);
+      //this.setState({ web3, accounts, contract: instance });
+      this.addEventListener(this);
+
     } catch (error) {
       // Catch any errors for any of the above operations.
       alert(
@@ -48,6 +54,31 @@ class App extends Component {
     this.setState({ storageValue: response });
   };
 
+  addEventListener(component) {
+    console.log('Listener added');
+    const updateEvent = this.state.contract.events.LogChanged();
+    console.log(updateEvent);
+    updateEvent.watch(function(err, result) {
+      if(err) {
+        console.log(err);
+        return;
+      }
+      console.log('LogChanged ', result.args.value.toString(10));
+      component.setState({storageValue: result.args.value.toString(10)});
+    });
+  }
+
+  updateValue = async (newValue) => {
+    const { accounts, contract } = this.state;
+    console.log('contract:', contract);
+    const result = await contract.methods.set(newValue).send({ from: accounts[0] });
+    console.log(result);
+    console.log("set receipt status", result.status);
+    if (!result.status) {
+      throw new Error("Failed to set value");
+    }
+  }
+
   render() {
     if (!this.state.web3) {
       return <div>Loading Web3, accounts, and contract...</div>;
@@ -65,6 +96,7 @@ class App extends Component {
           Try changing the value stored on <strong>line 40</strong> of App.js.
         </p>
         <div>The stored value is: {this.state.storageValue}</div>
+        <button className="changeButton" onClick={ () => this.updateValue(2) }>Change value</button>
       </div>
     );
   }
