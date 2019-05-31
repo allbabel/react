@@ -55,25 +55,16 @@ class App extends Component {
   };
 
   addEventListener(component) {
-    console.log('Listener added');
-    const updateEvent = this.state.contract.events.LogChanged();
-    console.log(updateEvent);
-    updateEvent.watch(function(err, result) {
-      if(err) {
-        console.log(err);
-        return;
-      }
-      console.log('LogChanged ', result.args.value.toString(10));
-      component.setState({storageValue: result.args.value.toString(10)});
+    let updateEvent = this.state.contract.events.LogChanged()
+    updateEvent.on('data', function(event) {
+      console.log(event);
+      component.setState({storageValue: event.returnValues.value});
     });
   }
 
   updateValue = async (newValue) => {
     const { accounts, contract } = this.state;
-    console.log('contract:', contract);
     const result = await contract.methods.set(newValue).send({ from: accounts[0] });
-    console.log(result);
-    console.log("set receipt status", result.status);
     if (!result.status) {
       throw new Error("Failed to set value");
     }
