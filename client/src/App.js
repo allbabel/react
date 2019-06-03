@@ -58,7 +58,7 @@ class App extends Component {
     let updateEvent = this.state.contract.events.LogChanged()
     updateEvent.on('data', function(event) {
       console.log(event);
-      component.setState({storageValue: event.returnValues.value});
+      component.setState({storageValue: event.returnValues.value.toString(10)});
     });
   }
 
